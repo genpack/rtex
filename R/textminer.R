@@ -768,7 +768,7 @@ TEXT.MINER <- setRefClass("TEXT.MINER",
                             plot.wordCloud = function(weighting = settings$weighting, package = 'wordcloud', cn = NULL, ...){
                               # Verifications:
                               verify(package, 'character', domain = c('wordcloud', 'wordcloud2'), varname = 'package')
-                              assert(require(package, character.only = T), "Package " %+% package %+% "is not installed!", err_src = match.call()[[1]])
+                              assert(require(package, character.only = T), "Package " %++% package %++% "is not installed!", err_src = match.call()[[1]])
                               verify(cn, c('integer', 'numeric'), domain = c(1,max(data$CLS)), varname = 'cn')
 
                               v        = sort(get.weights(weighting = weighting, cn = cn), decreasing = T)
@@ -802,7 +802,7 @@ TEXT.MINER <- setRefClass("TEXT.MINER",
                             plot.mds.2d    = function(weighting = settings$weighting, metric = settings$metric, plotter = 'graphics'){
                               # Verifications:
                               verify(plotter, 'character', lengths = 1, domain = c('graphics', 'rCharts'))
-                              assert(require(plotter, character.only = T), "Package " %+% package %+% "is not installed!")
+                              assert(require(plotter, character.only = T), "Package " %++% package %++% "is not installed!")
 
                               MDS = get.mds(n.dim = 2, weighting = weighting, metric = metric)
                               if (is.null(data$CLS)){clrs = settings$plot_color} else {clrs = data$CLS}
