@@ -777,7 +777,7 @@ TEXT.MINER <- setRefClass("TEXT.MINER",
                               if (settings$wc_gradient %in% c('weight', 'random')){
                                 if (settings$wc_gradient == 'random'){vp = runif(length(v))} else {vp = sort(get.weights(weighting = weighting, cn = cn), decreasing = T)}
                                 col      = round(vect.map(vp, 1, 9))
-                                pallete  = brewer.pal(9, plural.col(settings$wc_color)) # blue gradient
+                                pallete  = RColorBrewer::brewer.pal(9, plural.col(settings$wc_color)) # blue gradient
                                 cols     = pallete[col]
                               } else if (settings$wc_gradient == 'none'){cols = rep(settings$wc_color, length(v))}
                               else {assert(F, "Error: Not Supported!")}
