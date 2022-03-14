@@ -1,10 +1,10 @@
-Package: texer
+Package: rtex
 Type: Package
-Title: R package for text mining
-Version: 1.5.0
-Author: Nicolas Berta
-Maintainer: Nicolas Berta <nicolas.berta@gmail.com>
-Description: text clustering
+Title: R package for Text Mining and Natural Language Processing (NLP)
+Version: 1.5.3
+Author: Nima Ramezani
+Maintainer: Nima Ramezani <nima.ramezani@gmail.com>
+Description: This package is a toolbox for Text Clustering and Topic Modelling
 License: MIT
 Encoding: UTF-8
 LazyData: true
@@ -12,4 +12,4 @@ RoxygenNote: 6.1.1
 Collate: 
     'tmtools.R'
     'textminer.R'
-    'texer.R'
+    'rtex.R'

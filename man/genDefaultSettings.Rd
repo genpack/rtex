@@ -2,18 +2,19 @@
 % Please edit documentation in R/textminer.R
 \name{genDefaultSettings}
 \alias{genDefaultSettings}
-\title{A list of default settings for a TEXT.MINER object:}
+\title{A list of default settings for a TextMiner object:}
 \usage{
 genDefaultSettings(remove_punctuation = TRUE, remove_numbers = TRUE,
   tolower = TRUE, metric = "spherical", stemming = TRUE,
   remove_special_characters = TRUE, plain_text = TRUE, unique = TRUE,
-  weighting = "freq", wc_max_words = 50, wc_rot_per = 0.4,
-  stop_words = c(letters, LETTERS, tm::stopwords("english")),
-  wc_color = "blue", num_clust = 3, wc_gradient = "weight",
-  dictionary = data.frame(), plot_color = "blue", sparsity = 0.999)
+  tm_package = "text2vec", weighting = "freq", wc_max_words = 50,
+  wc_rot_per = 0.4, stop_words = c(letters, LETTERS,
+  tm::stopwords("english")), wc_color = "blue", num_clust = 3,
+  wc_gradient = "weight", dictionary = data.frame(),
+  plot_color = "blue", sparsity = 0.999)
 }
 \description{
-A list of default settings for a TEXT.MINER object:
+A list of default settings for a TextMiner object:
 }
 \section{Fields}{
 

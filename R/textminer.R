@@ -11,7 +11,7 @@
 # 3.2.3     07 October 2016     Method plot.wordCloud() supports package wordcloud2.
 # 3.2.4     07 October 2016     Methods subset() and subsets() renamed to subsetObject() and subsetObjects().
 # 3.2.5     07 October 2016     Methods cluster() and clusters() renamed to clusterObject() and clusterObjects().
-# 3.3.0     22 February 2018    Fundamental structural change in the TEXT.MINER class:
+# 3.3.0     22 February 2018    Fundamental structural change in the TextMiner class:
 # Package text2vec can now be used for the creation of dtm matrix
 # All properties moved to list data, text vector is now a column of table dataset. This table contains many other data regarding the text (case)
 # Method names changed: get.docterm() renamed to get.dtm()
@@ -20,7 +20,8 @@
 # 3.3.3     01 March 2018       Metric 'jaccard' added.
 # 3.3.4     13 March 2018       Some bugs fixed.
 # 3.4.0     14 March 2018       Topic Modeling added: Methods: get.doctopic(), get.topicword(), get.themes() and plot.topics() added.
-
+# 3.4.1     08 March 2022       TEXT.MINER Class renamed to TextMiner
+# 3.4.3     08 March 2022       removeSparseTerms() is called only if settings$sparsity is less than 1.0
 
 valid.metrics    = c("euclidean", "maximum", "manhattan", "canberra", "binary" , "minkowski", "spherical", "jaccard")
 
@@ -50,7 +51,7 @@ arg.verify = function(weighting, metric){
   assert(weighting %in% valid.weightings, "Error from get.dist(): Argument weighting is unknown")
 }
 
-#' A list of default settings for a TEXT.MINER object:
+#' A list of default settings for a TextMiner object:
 #' @field remove_punctuation a single logical: Should punctuations be removed from all text documents? (default is TRUE)
 #' @field remove_numbers a single logical: Should numbers be removed from all text documents? (default is TRUE)
 #' @field tolower a single logical: should all letters be converted to lower case? (default is TRUE)
@@ -76,20 +77,20 @@ arg.verify = function(weighting, metric){
 genDefaultSettings = function(remove_punctuation = TRUE, remove_numbers = TRUE,
                               tolower = TRUE, metric = 'spherical', stemming = TRUE,
                               remove_special_characters = TRUE, plain_text = TRUE,
-                              unique = TRUE,
+                              unique = TRUE, tm_package = 'text2vec',
                               weighting = 'freq', wc_max_words = 50,
                               wc_rot_per = 0.4, stop_words = c(letters, LETTERS, tm::stopwords('english')),
                               wc_color = 'blue', num_clust = 3, wc_gradient = 'weight', dictionary = data.frame(),
                               plot_color = 'blue', sparsity = 0.999){
   list(remove_punctuation = remove_punctuation, remove_numbers = remove_numbers,
-       tolower = tolower, metric = metric, stemming = stemming,
+       tolower = tolower, metric = metric, stemming = stemming, tm_package = tm_package,
        remove_special_characters = remove_special_characters, plain_text = plain_text,
        unique = unique, weighting = weighting, wc_max_words = wc_max_words, stop_words = stop_words,
        wc_rot_per = wc_rot_per, wc_color = wc_color, num_clust = num_clust, wc_gradient = wc_gradient,
        plot_color = plot_color, sparsity = sparsity)
 }
 
-#' Reference Class TEXT.MINER is a combination of properties and methods for running various text mining
+#' Reference Class TextMiner is a combination of properties and methods for running various text mining
 #' algorithms
 #'
 #' @field text vector of character containing raw text documents which are contents of argument \code{text_vect} passed to the class constructor.
@@ -132,9 +133,9 @@ genDefaultSettings = function(remove_punctuation = TRUE, remove_numbers = TRUE,
 #' @field data$CNTR.dist vector of numerics of size \code{Nd}.
 #' Contains the distaces of each document from the center of all documents using the metric passed to method \code{center.dist()} in its last call.
 #'
-#' @export TEXT.MINER
-#' @exportClass TEXT.MINER
-TEXT.MINER <- setRefClass("TEXT.MINER",
+#' @export TextMiner
+#' @exportClass TextMiner
+TextMiner <- setRefClass("TextMiner",
                           # https://www.analyticsvidhya.com/blog/2016/02/time-series-forecasting-codes-python/
                           fields = list(
                             data          = "list",
@@ -199,6 +200,7 @@ TEXT.MINER <- setRefClass("TEXT.MINER",
                               settings$tm_package %<>% verify('character', lengths = 1, domain = c('tm', 'text2vec'), default = 'text2vec')
                               settings$sparsity %<>% verify('numeric', lengths = 1, domain = c(0, 1), default = 1.0)
                               settings$normalize %<>% verify('logical', lengths = 1, domain = c(T, F), default = F) # if TRUE, dtm will be normalized by rows, means rowSums(DTM) = 1, good for when documents have various length
+                              settings$stemming %<>% verify('logical', lengths = 1, domain = c(T, F), default = T) # if TRUE, dtm words will change to stems
                               settings$stop_words %<>% verify('character', default = c(tm::stopwords('english'), letters, LETTERS))
                               settings$dictionary %<>% data.frame() # todo: make it a list or provide predefined column names
                               settings$wc_gradint %<>% verify('character', lengths = 1, default = 'weight')
@@ -260,7 +262,7 @@ TEXT.MINER <- setRefClass("TEXT.MINER",
 
                               clusts = list()
                               for (i in 1:max(k)){
-                                tmr_i  = new('TEXT.MINER', text_vect = text[k == i], settings = settings)
+                                tmr_i  = new('TextMiner', text_vect = text[k == i], settings = settings)
                                 clusts = c(clusts, tmr_i)
                               }
                               return(clusts)
@@ -268,11 +270,11 @@ TEXT.MINER <- setRefClass("TEXT.MINER",
 
                             clusterObject = function(cn){
                               "
-                              Returns all documents of a given cluster, as a new TEXT.MINER object. \n
+                              Returns all documents of a given cluster, as a new TextMiner object. \n
                               \n
                               Arguments: \n
                               cn:         a single integer specifying the cluster number. \n
-                              Returns: a fresh object of class TEXT.MINER containing only the text documents within the given cluster number.\n
+                              Returns: a fresh object of class TextMiner containing only the text documents within the given cluster number.\n
                               "
                               if (is.null(data$CLS)){
                                 return()
@@ -284,11 +286,11 @@ TEXT.MINER <- setRefClass("TEXT.MINER",
 
                             clusterObjects = function(){
                               "
-                              Returns each cluster as a new TEXT.MINER object. \n
+                              Returns each cluster as a new TextMiner object. \n
                               \n
                               Arguments: \n
                               No arguments. \n
-                              Returns: a list of objects of class TEXT.MINER. Each element contains the text documents within one cluster.\n
+                              Returns: a list of objects of class TextMiner. Each element contains the text documents within one cluster.\n
                               "
                               if (is.null(data$CLS)){
                                 return()
@@ -297,7 +299,7 @@ TEXT.MINER <- setRefClass("TEXT.MINER",
                             },
 
                             subsetObject = function(rows){
-                              tmr  = new('TEXT.MINER', dataset = data$dataset[rows,], text_col = 'text', id_col = 'ID', settings = settings)
+                              tmr  = new('TextMiner', dataset = data$dataset[rows,], text_col = 'text', id_col = 'ID', settings = settings)
                               return(tmr)
                             },
 
@@ -384,10 +386,10 @@ TEXT.MINER <- setRefClass("TEXT.MINER",
                                   # remove standard English stopwords, extra stopwords,
                                   if (length(settings$stop_words) != 0){crp <- tm_map(crp, removeWords, settings$stop_words)}
                                   # if (settings$plain_text){crp <- tm_map(crp, PlainTextDocument)} # make sure it's read as plain text
-                                  # if (settings$stemming){
-                                  #   library(SnowballC)
-                                  #   crp <- tm_map(crp, stemDocument)
-                                  # }
+                                  if (settings$stemming){
+                                    library(SnowballC)
+                                    crp <- tm_map(crp, stemDocument)
+                                  }
                                   # Make dictionary conversions
                                   if (inherits(settings$dictionary,'data.frame')){
                                     if (dim(settings$dictionary)[1] > 0){
@@ -399,7 +401,11 @@ TEXT.MINER <- setRefClass("TEXT.MINER",
                                     }
                                   }
 
-                                  data$DTM <<- DocumentTermMatrix(crp, control = ctrl) %>% removeSparseTerms(settings$sparsity)  %>% as.matrix
+                                  data$DTM <<- DocumentTermMatrix(crp, control = ctrl)
+                                  if(settings$sparsity < 1){
+                                    data$DTM <<- data$DTM %>% removeSparseTerms(settings$sparsity)
+                                  }
+                                  data$DTM %<>% as.matrix
                                   # rownames(data$DTM) <<- data$dataset$ID
                                   # data$W.bin   <<- as.matrix(weightBin(t(data$DTM)))
                                 }
@@ -917,7 +923,7 @@ TEXT.MINER <- setRefClass("TEXT.MINER",
 
 # Some generic functions
 
-setMethod("length", "TEXT.MINER", function(x) nrow(x$data$dataset))
+setMethod("length", "TextMiner", function(x) nrow(x$data$dataset))
 
 # length is a pre-defined generic function like:
 # summary, plot, show, print, ...
@@ -927,7 +933,7 @@ setMethod("length", "TEXT.MINER", function(x) nrow(x$data$dataset))
 
 setGeneric("words", function(x) standardGeneric('words'))
 
-setMethod("words", "TEXT.MINER", function(x) {
+setMethod("words", "TextMiner", function(x) {
   if (is.null(x$data$words)){D = x$get.dtm()}
   return(x$data$words)
 })
@@ -935,7 +941,7 @@ setMethod("words", "TEXT.MINER", function(x) {
 
 # define a setter:
 setGeneric("metric<-", function(x, value) standardGeneric("metric<-"))
-setReplaceMethod("metric", "TEXT.MINER", function(x, value) {
+setReplaceMethod("metric", "TextMiner", function(x, value) {
   assert(value %in% valid.metrics, "Error: Given metric is unknown!")
   x$settings$metric <<- value
   x$data$CRS       <<- NULL
@@ -946,7 +952,7 @@ setReplaceMethod("metric", "TEXT.MINER", function(x, value) {
 })
 
 # define the validity method:
-# setValidity("TEXT.MINER", function(object){
+# setValidity("TextMiner", function(object){
 #   if !is.character(objects$settings$metric)
 # })
 
